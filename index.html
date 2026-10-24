@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#05080f">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="原生 HTML/CSS/JS 贪吃蛇：网页、手机、桌面（PWA）可玩，内置保证通关的 AI 演示。">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="贪吃蛇">
+  <title>贪吃蛇</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="style.css?v=1">
+</head>
+<body data-state="ready">
+  <div class="app" id="app">
+    <header class="topbar">
+      <h1 class="title"><span class="logo" aria-hidden="true">🐍</span>贪吃蛇</h1>
+      <div class="actions" role="toolbar" aria-label="游戏控制">
+        <button type="button" class="icon-btn" id="btnAI" aria-label="AI 演示" aria-pressed="false" title="AI 演示">🤖</button>
+        <button type="button" class="icon-btn" id="btnSound" aria-label="声音" aria-pressed="true" title="声音（M）">🔊</button>
+        <button type="button" class="icon-btn" id="btnFull" aria-label="全屏" aria-pressed="false" title="全屏（F）">⛶</button>
+        <button type="button" class="icon-btn" id="btnPause" aria-label="暂停" aria-pressed="false" title="暂停（空格 / P）">⏸</button>
+      </div>
+    </header>
+
+    <section class="scores" aria-label="计分">
+      <div class="stat" id="statScore"><span class="stat-label">得分</span><span class="stat-value" id="score" aria-live="polite">0</span></div>
+      <div class="stat" id="statBest"><span class="stat-label">最高分</span><span class="stat-value" id="best">0</span></div>
+      <div class="stat" id="statSpeed"><span class="stat-label">速度</span><span class="stat-value" id="speed">1 级</span></div>
+    </section>
+
+    <main class="stage" id="stage">
+      <div class="board-wrap" id="boardWrap">
+        <canvas id="board" role="img" aria-label="贪吃蛇棋盘，20 × 20 格"></canvas>
+
+        <div class="ai-bar" id="aiBar" hidden>
+          <span class="ai-bar-label">🤖 AI 演示中</span>
+          <button type="button" class="ai-speed" id="btnAISpeed" aria-label="AI 演示速度：×1，点击切换">×1</button>
+        </div>
+
+        <div class="overlay" id="overlay">
+          <section class="panel" id="panelStart" role="dialog" aria-modal="false" aria-labelledby="startTitle">
+            <h2 id="startTitle" class="panel-title">🐍 贪吃蛇</h2>
+            <p class="panel-sub">吃果实变长，填满 400 格即通关</p>
+            <div class="seg" id="diffSeg" role="group" aria-label="难度">
+              <button type="button" class="seg-btn" data-diff="easy" aria-pressed="false">简单</button>
+              <button type="button" class="seg-btn" data-diff="normal" aria-pressed="false">普通</button>
+              <button type="button" class="seg-btn" data-diff="hard" aria-pressed="false">困难</button>
+              <button type="button" class="seg-btn" data-diff="insane" aria-pressed="false">疯狂</button>
+            </div>
+            <p class="panel-hint" id="diffHint">普通 · 150→78 毫秒/步</p>
+            <button type="button" class="btn btn-primary wide" id="btnStart" data-autofocus>▶ 开始游戏</button>
+            <button type="button" class="btn btn-ai wide" id="btnStartAI">🤖 看 AI 演示</button>
+            <p class="panel-hint">最高分 <b id="startBest">0</b></p>
+          </section>
+
+          <section class="panel" id="panelPause" role="dialog" aria-modal="false" aria-labelledby="pauseTitle" hidden>
+            <h2 id="pauseTitle" class="panel-title">⏸ 已暂停</h2>
+            <p class="panel-sub">按 空格 / P 继续</p>
+            <button type="button" class="btn btn-primary wide" id="btnResume" data-autofocus>▶ 继续</button>
+            <button type="button" class="btn wide" id="btnRestart">↻ 重新开始</button>
+          </section>
+
+          <section class="panel" id="panelOver" role="dialog" aria-modal="false" aria-labelledby="overTitle" hidden>
+            <h2 id="overTitle" class="panel-title">💥 游戏结束</h2>
+            <p class="panel-sub" id="overReason">撞墙了</p>
+            <p class="panel-score">得分 <b id="overScore">0</b></p>
+            <p class="panel-hint">最高分 <b id="overBest">0</b> <span class="badge" id="overRecord" hidden>🏆 新纪录！</span></p>
+            <div class="row">
+              <button type="button" class="btn btn-primary" id="btnRetry" data-autofocus>↻ 再来一局</button>
+              <button type="button" class="btn" id="btnOverMenu">难度</button>
+            </div>
+            <button type="button" class="btn btn-ai wide" id="btnOverAI">🤖 看 AI 演示</button>
+          </section>
+
+          <section class="panel" id="panelWin" role="dialog" aria-modal="false" aria-labelledby="winTitle" hidden>
+            <h2 id="winTitle" class="panel-title">🎉 通关！</h2>
+            <p class="panel-sub" id="winMsg">你用 397 个果实填满了整个棋盘</p>
+            <p class="panel-score">得分 <b id="winScore">0</b></p>
+            <p class="panel-hint">最高分 <b id="winBest">0</b></p>
+            <div class="row">
+              <button type="button" class="btn btn-primary" id="btnWinRetry" data-autofocus>↻ 再来一局</button>
+              <button type="button" class="btn" id="btnWinMenu">难度</button>
+            </div>
+            <button type="button" class="btn btn-ai wide" id="btnWinAI">🤖 看 AI 演示</button>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <p class="hint hint-keys">方向键 / WASD 移动 · 拖动转向 · 空格 / P 暂停 · R 重开 · M 静音</p>
+      <p class="hint hint-swipe">在棋盘上滑动转向 · 点 ⏸ 暂停</p>
+      <div class="dpad" id="dpad" role="group" aria-label="方向键">
+        <button type="button" class="dpad-btn up" data-dir="up" aria-label="向上">▲</button>
+        <button type="button" class="dpad-btn left" data-dir="left" aria-label="向左">◀</button>
+        <button type="button" class="dpad-btn mid" data-action="pause" aria-label="暂停 / 继续">⏯</button>
+        <button type="button" class="dpad-btn right" data-dir="right" aria-label="向右">▶</button>
+        <button type="button" class="dpad-btn down" data-dir="down" aria-label="向下">▼</button>
+      </div>
+    </footer>
+  </div>
+
+  <script src="ai.js?v=1"></script>
+  <script src="game.js?v=1"></script>
+</body>
+</html>

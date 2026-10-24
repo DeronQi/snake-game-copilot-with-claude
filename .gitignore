@@ -1,0 +1,18 @@
+# 依赖与缓存（项目本身零依赖，只有验证脚本可能本地安装 Playwright）
+node_modules/
+package-lock.json
+package.json
+__pycache__/
+*.pyc
+
+# Playwright / 测试产物
+test-results/
+playwright-report/
+
+# 系统 / 编辑器
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.log
